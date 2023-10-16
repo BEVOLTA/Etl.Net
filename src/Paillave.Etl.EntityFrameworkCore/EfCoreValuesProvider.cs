@@ -37,11 +37,12 @@ namespace Paillave.Etl.EntityFrameworkCore
                     : resolver.Resolve<DbContext>(_args.ConnectionKey);
             if (_args.StreamMode)
             {
-                invoker.InvokeInDedicatedThreadAsync(dbContext, () =>
+                var lsts = invoker.InvokeInDedicatedThreadAsync(dbContext, () =>
                 {
-                    var lsts = _args.GetQuery(new DbContextWrapper(dbContext), input).AsQueryable();
-                    foreach (var elt in lsts) push(elt);
-                }).Wait();
+                    return _args.GetQuery(new DbContextWrapper(dbContext), input).AsQueryable();
+                }).GetAwaiter().GetResult();
+                foreach (var elt in lsts) push(elt);
+
             }
             else
             {
